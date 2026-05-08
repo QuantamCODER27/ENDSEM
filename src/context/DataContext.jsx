@@ -50,25 +50,23 @@ export const DataProvider = ({ children }) => {
 
   const fetchISS = useCallback(async () => {
     try {
-      const response = await axios.get('http://api.open-notify.org/iss-now.json');
-      const { latitude, longitude } = response.data.iss_position;
-      const timestamp = response.data.timestamp;
-      const newPos = { lat: parseFloat(latitude), lng: parseFloat(longitude), timestamp };
+      // Switched to 'wheretheiss.at' because it supports HTTPS (critical for Vercel)
+      const response = await axios.get('https://api.wheretheiss.at/v1/satellites/25544');
+      const { latitude, longitude, velocity, timestamp } = response.data;
+      
+      const newPos = { 
+        lat: parseFloat(latitude), 
+        lng: parseFloat(longitude), 
+        timestamp 
+      };
 
       setIssData(prev => {
         const newHistory = [...prev.history, newPos].slice(-30);
-        let newSpeed = prev.speed;
-        if (prev.history.length > 0) {
-          const last = prev.history[prev.history.length - 1];
-          const dist = haversine(last.lat, last.lng, newPos.lat, newPos.lng);
-          const hrs = (newPos.timestamp - last.timestamp) / 3600;
-          if (hrs > 0) newSpeed = Math.round(dist / hrs);
-        }
         return {
           ...prev,
           location: newPos,
           history: newHistory,
-          speed: newSpeed || 27600,
+          speed: Math.round(velocity) || 27600, // Real velocity from API
           loading: false,
           error: null,
         };
@@ -76,13 +74,15 @@ export const DataProvider = ({ children }) => {
 
       fetchNearestPlace(newPos.lat, newPos.lng);
     } catch (err) {
+      console.error('ISS fetch error:', err);
       setIssData(prev => ({ ...prev, error: 'Failed to fetch ISS location', loading: false }));
     }
   }, []);
 
   const fetchAstronauts = useCallback(async () => {
     try {
-      const response = await axios.get('http://api.open-notify.org/astros.json');
+      // Using an HTTPS mirror for astronaut data
+      const response = await axios.get('https://corquaid.github.io/international-space-station-api/api/v1/astros.json');
       setIssData(prev => ({ ...prev, astronauts: response.data.people }));
     } catch (err) {
       console.error('Astronauts fetch error', err);
