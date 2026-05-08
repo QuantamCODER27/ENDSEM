@@ -22,9 +22,27 @@ const ChangeView = ({ center }) => {
 
 const ISSMap = () => {
   const { issData } = useData();
-  const { location, history } = issData;
+  const { location, history, isRateLimited } = issData;
+  const [hasInitialData, setHasInitialData] = useState(false);
 
-  if (!location) return <div className="flex-center h-full">Loading Map...</div>;
+  useEffect(() => {
+    if (location) setHasInitialData(true);
+  }, [location]);
+
+  if (!hasInitialData) {
+    return (
+      <div className="flex-center h-full flex-col p-4 text-center">
+        {isRateLimited ? (
+          <>
+            <div className="text-warning mb-2" style={{ fontSize: '1.5rem' }}>⚠️</div>
+            <p>ISS API is temporarily throttled. It will load automatically in a few moments once the rate limit resets.</p>
+          </>
+        ) : (
+          <p>Loading Map...</p>
+        )}
+      </div>
+    );
+  }
 
   const trajectory = history.slice(-15).map(pos => [pos.lat, pos.lng]);
   const center = [location.lat, location.lng];

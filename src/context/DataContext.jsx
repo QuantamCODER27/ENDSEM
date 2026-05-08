@@ -26,6 +26,7 @@ export const DataProvider = ({ children }) => {
     astronauts: [],
     loading: true,
     error: null,
+    isRateLimited: false,
   });
 
   // ----- NEWS STATE -----
@@ -69,6 +70,7 @@ export const DataProvider = ({ children }) => {
           speed: Math.round(velocity) || 27600, // Real velocity from API
           loading: false,
           error: null,
+          isRateLimited: false,
         };
       });
 
@@ -76,9 +78,10 @@ export const DataProvider = ({ children }) => {
     } catch (err) {
       if (err.response?.status === 429) {
         console.warn('ISS API Rate limited - using cached data');
+        setIssData(prev => ({ ...prev, loading: false, isRateLimited: true }));
       } else {
         console.error('ISS fetch error:', err);
-        setIssData(prev => ({ ...prev, error: 'Failed to fetch ISS location', loading: false }));
+        setIssData(prev => ({ ...prev, error: 'Failed to fetch ISS location', loading: false, isRateLimited: false }));
       }
     }
   }, []);

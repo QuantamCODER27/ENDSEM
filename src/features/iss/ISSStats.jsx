@@ -4,7 +4,11 @@ import { Gauge, MapPin, Navigation, History } from 'lucide-react';
 
 const ISSStats = () => {
   const { issData } = useData();
-  const { location, speed, nearestPlace, history } = issData;
+  const { location, speed, nearestPlace, history, isRateLimited } = issData;
+
+  const displayPlace = (isRateLimited && nearestPlace.includes('Fetching')) 
+    ? 'Rate Limited - Waiting...' 
+    : nearestPlace;
 
   const stats = [
     {
@@ -42,7 +46,7 @@ const ISSStats = () => {
           </div>
           <div>
             <p className="label">Nearest Place / Ocean</p>
-            <h3 className="value">{nearestPlace}</h3>
+            <h3 className="value">{displayPlace}</h3>
           </div>
         </div>
       </div>
