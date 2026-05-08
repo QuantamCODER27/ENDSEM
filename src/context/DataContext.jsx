@@ -74,8 +74,12 @@ export const DataProvider = ({ children }) => {
 
       fetchNearestPlace(newPos.lat, newPos.lng);
     } catch (err) {
-      console.error('ISS fetch error:', err);
-      setIssData(prev => ({ ...prev, error: 'Failed to fetch ISS location', loading: false }));
+      if (err.response?.status === 429) {
+        console.warn('ISS API Rate limited - using cached data');
+      } else {
+        console.error('ISS fetch error:', err);
+        setIssData(prev => ({ ...prev, error: 'Failed to fetch ISS location', loading: false }));
+      }
     }
   }, []);
 
@@ -146,8 +150,11 @@ export const DataProvider = ({ children }) => {
     fetchISS();
     fetchAstronauts();
     fetchNews();
-    const issInterval = setInterval(fetchISS, 15000);
-    const astroInterval = setInterval(fetchAstronauts, 60000);
+    
+    // Increased interval to 30s to stay well within rate limits
+    const issInterval = setInterval(fetchISS, 30000);
+    const astroInterval = setInterval(fetchAstronauts, 120000); // 2 mins for astronauts
+    
     return () => {
       clearInterval(issInterval);
       clearInterval(astroInterval);
